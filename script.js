@@ -1,0 +1,246 @@
+class ExecutiveMember {
+    constructor(name, post) {
+        this.name = name;
+        this.post = post;
+        this.absentCount = 0;
+        this.totalAbsentDays = 0;
+        this.totalPresentDays = 0;
+        this.consecutiveAbsentDays = 0;
+        this.isBlacklisted = false;
+    }
+
+    increaseAbsentCount() {
+        this.absentCount++;
+        this.totalAbsentDays++;
+        this.consecutiveAbsentDays++;
+    }
+
+    resetConsecutiveAbsentDays() {
+        this.consecutiveAbsentDays = 0;
+    }
+}
+
+class AttendanceSystem {
+    constructor() {
+        this.loadMembers();
+        this.updateUI();
+    }
+
+    loadMembers() {
+        const members = JSON.parse(localStorage.getItem('members')) || [];
+        this.members = members.reduce((acc, member) => {
+            acc[member.name] = new ExecutiveMember(member.name, member.post);
+            acc[member.name].absentCount = member.absentCount;
+            acc[member.name].totalAbsentDays = member.totalAbsentDays;
+            acc[member.name].totalPresentDays = member.totalPresentDays;
+            acc[member.name].consecutiveAbsentDays = member.consecutiveAbsentDays;
+            acc[member.name].isBlacklisted = member.isBlacklisted;
+            return acc;
+        }, {});
+    }
+
+    saveMembers() {
+        localStorage.setItem('members', JSON.stringify(Object.values(this.members)));
+        this.updateUI();
+    }
+
+    addMember(name, post) {
+        if (!this.members[name]) {
+            this.members[name] = new ExecutiveMember(name, post);
+            this.saveMembers();
+            alert(`${name} has been added.`);
+        } else {
+            alert(`${name} is already a member.`);
+        }
+    }
+
+    recordAttendance(name, isPresent) {
+        if (this.members[name]) {
+            const member = this.members[name];
+            if (!isPresent) {
+                member.increaseAbsentCount();
+                if (member.consecutiveAbsentDays >= 3) {
+                    member.isBlacklisted = true;
+                }
+            } else {
+                member.resetConsecutiveAbsentDays();
+                member.totalPresentDays++;
+            }
+            this.saveMembers();
+        } else {
+            alert(`${name} is not a member.`);
+        }
+    }
+
+    resetBlacklist(name) {
+        if (this.members[name]) {
+            const member = this.members[name];
+            member.isBlacklisted = false;
+            this.saveMembers();
+            alert(`${name}'s blacklist status has been reset.`);
+        } else {
+            alert(`${name} is not a member.`);
+        }
+    }
+
+    deleteMember(name) {
+        if (this.members[name]) {
+            delete this.members[name];
+            this.saveMembers();
+            alert(`${name} has been removed.`);
+        } else {
+            alert(`${name} is not a member.`);
+        }
+    }
+
+    editMember(oldName, newName, newPost) {
+        if (this.members[oldName]) {
+            if (oldName !== newName && this.members[newName]) {
+                alert(`${newName} is already a member. Please choose a different name.`);
+            } else {
+                const member = this.members[oldName];
+                delete this.members[oldName];
+                member.name = newName;
+                member.post = newPost;
+                this.members[newName] = member;
+                this.saveMembers();
+                alert(`${oldName} has been updated to ${newName}.`);
+            }
+        } else {
+            alert(`${oldName} is not a member.`);
+        }
+    }
+
+    getBlacklistedMembers() {
+        return Object.values(this.members).filter(member => member.isBlacklisted);
+    }
+
+    getAllMembers() {
+        return Object.values(this.members).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    updateUI() {
+        const membersTable = document.getElementById('membersTable');
+        membersTable.innerHTML = '';
+
+        const headerRow = membersTable.insertRow();
+        headerRow.innerHTML = `
+            <th>Serial</th>
+            <th>Name</th>
+            <th>Post</th>
+            <th>Total Present</th>
+            <th>Total Absent</th>
+            <th>Consecutive Absent</th>
+            <th>Blacklisted</th>
+            <th>Actions</th>
+        `;
+
+        this.getAllMembers().forEach((member, index) => {
+            const row = membersTable.insertRow();
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${member.name}</td>
+                <td>${member.post}</td>
+                <td>${member.totalPresentDays}</td>
+                <td>${member.totalAbsentDays}</td>
+                <td>${member.consecutiveAbsentDays}</td>
+                <td>${member.isBlacklisted ? 'Yes' : 'No'}</td>
+                <td>
+                    <button class="edit-button" onclick="editMember('${member.name}')">Edit</button>
+                    <button onclick="deleteMember('${member.name}')">Delete</button>
+                </td>
+            `;
+        });
+
+        document.getElementById('totalExecutives').textContent = Object.keys(this.members).length;
+        this.showBlacklistedMembers();
+    }
+
+    showBlacklistedMembers() {
+        const blacklistedMembers = this.getBlacklistedMembers();
+        document.getElementById('blacklistedMembers').innerHTML = blacklistedMembers.map(m => m.name).join(', ');
+    }
+
+    showAttendance() {
+        const searchName = document.getElementById('searchAttendanceName').value.trim();
+        const members = this.getAllMembers().filter(member => member.name.includes(searchName));
+        let attendanceInfo = '<table>';
+        attendanceInfo += '<tr><th>Name</th><th>Post</th><th>Total Present</th><th>Total Absent</th><th>Consecutive Absent</th><th>Blacklisted</th></tr>';
+        members.forEach(member => {
+            attendanceInfo += `
+                <tr>
+                    <td>${member.name}</td>
+                    <td>${member.post}</td>
+                    <td>${member.totalPresentDays}</td>
+                    <td>${member.totalAbsentDays}</td>
+                    <td>${member.consecutiveAbsentDays}</td>
+                    <td>${member.isBlacklisted ? 'Yes' : 'No'}</td>
+                </tr>`;
+        });
+        attendanceInfo += '</table>';
+        document.getElementById('attendanceList').innerHTML = attendanceInfo;
+    }
+}
+
+const attendanceSystem = new AttendanceSystem();
+
+function addMember() {
+    const name = document.getElementById('memberName').value.trim();
+    const post = document.getElementById('memberPost').value.trim();
+    if (name && post) {
+        attendanceSystem.addMember(name, post);
+        document.getElementById('memberName').value = '';
+        document.getElementById('memberPost').value = '';
+    } else {
+        alert('Please provide both name and post.');
+    }
+}
+
+function recordAttendance() {
+    const name = document.getElementById('attendanceName').value.trim();
+    const isPresent = document.getElementById('attendanceStatus').value === 'present';
+    if (name) {
+        const member = attendanceSystem.members[name];
+        if (member) {
+            if (member.isBlacklisted && isPresent) {
+                alert(`${name} is blacklisted. Reset blacklist before recording attendance.`);
+            } else {
+                attendanceSystem.recordAttendance(name, isPresent);
+                document.getElementById('attendanceName').value = '';
+            }
+        } else {
+            alert(`${name} is not a member.`);
+        }
+    } else {
+        alert('Please provide the name.');
+    }
+}
+
+function resetBlacklist() {
+    const name = document.getElementById('resetName').value.trim();
+    if (name) {
+        attendanceSystem.resetBlacklist(name);
+        document.getElementById('resetName').value = '';
+    } else {
+        alert('Please provide the name.');
+    }
+}
+
+function deleteMember(name) {
+    if (confirm(`Are you sure you want to delete ${name}?`)) {
+        attendanceSystem.deleteMember(name);
+    }
+}
+
+function editMember(name) {
+    const newName = prompt(`Enter new name for ${name}:`);
+    const newPost = prompt(`Enter new post for ${name}:`);
+    if (newName && newPost) {
+        attendanceSystem.editMember(name, newName.trim(), newPost.trim());
+    } else {
+        alert('Please provide both name and post.');
+    }
+}
+
+
+       

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left-side">
+            <h1>Attendance System for Executive Members</h1>
+
+            <div class="section">
+                <h2>Add Member</h2>
+                <input type="text" id="memberName" placeholder="Member Name">
+                <input type="text" id="memberPost" placeholder="Member Post">
+                <button onclick="addMember()">Add Member</button>
+            </div>
+
+            <div class="section">
+                <h2>Record Attendance</h2>
+                <input type="text" id="attendanceName" placeholder="Member Name">
+                <select id="attendanceStatus">
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                </select>
+                <button onclick="recordAttendance()">Record Attendance</button>
+            </div>
+
+            <div class="section">
+                <h2>Reset Blacklist</h2>
+                <input type="text" id="resetName" placeholder="Member Name">
+                <button onclick="resetBlacklist()">Reset Blacklist</button>
+            </div>
+
+            <div class="section">
+                <h2>Member Attendance</h2>
+                <input type="text" id="searchAttendanceName" placeholder="Search Member Name">
+                <button onclick="attendanceSystem.showAttendance()">Show Attendance</button>
+
+                <div id="attendanceList" class="result"></div>
+            </div>
+        </div>
+
+        <div class="right-side">
+            <h2>Executive Members</h2>
+            <table id="membersTable">
+                <thead>
+                    <tr>
+                        <th>Serial</th>
+                        <th>Name</th>
+                        <th>Post</th>
+                        <th>Absences</th>
+                        <th>Blacklisted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="section">
+                <h3>Total Executives: <span id="totalExecutives">0</span></h3>
+            </div>
+            <div class="section">
+                <h3>Blacklisted Members:</h3>
+                <div id="blacklistedMembers" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
