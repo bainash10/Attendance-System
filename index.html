@@ -20,12 +20,9 @@
 
             <div class="section">
                 <h2>Record Attendance</h2>
-                <input type="text" id="attendanceName" placeholder="Member Name">
-                <select id="attendanceStatus">
-                    <option value="present">Present</option>
-                    <option value="absent">Absent</option>
-                </select>
-                <button onclick="recordAttendance()">Record Attendance</button>
+                <div id="membersCheckboxes"></div>
+                <button onclick="recordAttendance(true)">Mark Present</button>
+                <button onclick="recordAttendance(false)">Mark Absent</button>
             </div>
 
             <div class="section">
@@ -51,7 +48,9 @@
                         <th>Serial</th>
                         <th>Name</th>
                         <th>Post</th>
-                        <th>Absences</th>
+                        <th>Total Present</th>
+                        <th>Total Absent</th>
+                        <th>Consecutive Absent</th>
                         <th>Blacklisted</th>
                         <th>Actions</th>
                     </tr>

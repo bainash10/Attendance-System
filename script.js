@@ -54,22 +54,30 @@ class AttendanceSystem {
         }
     }
 
-    recordAttendance(name, isPresent) {
-        if (this.members[name]) {
-            const member = this.members[name];
-            if (!isPresent) {
-                member.increaseAbsentCount();
-                if (member.consecutiveAbsentDays >= 3) {
-                    member.isBlacklisted = true;
+    recordAttendance(isPresent) {
+        const checkboxes = document.querySelectorAll('#membersCheckboxes input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const name = checkbox.value;
+                const member = this.members[name];
+                if (member) {
+                    if (isPresent) {
+                        if (member.isBlacklisted) {
+                            alert(`${name} is blacklisted. Reset blacklist before recording attendance.`);
+                        } else {
+                            member.totalPresentDays++;
+                            member.resetConsecutiveAbsentDays();
+                        }
+                    } else {
+                        member.increaseAbsentCount();
+                        if (member.consecutiveAbsentDays >= 3) {
+                            member.isBlacklisted = true;
+                        }
+                    }
                 }
-            } else {
-                member.resetConsecutiveAbsentDays();
-                member.totalPresentDays++;
             }
-            this.saveMembers();
-        } else {
-            alert(`${name} is not a member.`);
-        }
+        });
+        this.saveMembers();
     }
 
     resetBlacklist(name) {
@@ -120,20 +128,8 @@ class AttendanceSystem {
     }
 
     updateUI() {
-        const membersTable = document.getElementById('membersTable');
+        const membersTable = document.getElementById('membersTable').getElementsByTagName('tbody')[0];
         membersTable.innerHTML = '';
-
-        const headerRow = membersTable.insertRow();
-        headerRow.innerHTML = `
-            <th>Serial</th>
-            <th>Name</th>
-            <th>Post</th>
-            <th>Total Present</th>
-            <th>Total Absent</th>
-            <th>Consecutive Absent</th>
-            <th>Blacklisted</th>
-            <th>Actions</th>
-        `;
 
         this.getAllMembers().forEach((member, index) => {
             const row = membersTable.insertRow();
@@ -154,6 +150,24 @@ class AttendanceSystem {
 
         document.getElementById('totalExecutives').textContent = Object.keys(this.members).length;
         this.showBlacklistedMembers();
+        this.updateMemberCheckboxes();
+    }
+
+    updateMemberCheckboxes() {
+        const checkboxesContainer = document.getElementById('membersCheckboxes');
+        checkboxesContainer.innerHTML = '';
+        this.getAllMembers().forEach(member => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = member.name;
+            checkbox.id = `checkbox-${member.name}`;
+            const label = document.createElement('label');
+            label.htmlFor = `checkbox-${member.name}`;
+            label.textContent = member.name;
+            checkboxesContainer.appendChild(checkbox);
+            checkboxesContainer.appendChild(label);
+            checkboxesContainer.appendChild(document.createElement('br'));
+        });
     }
 
     showBlacklistedMembers() {
@@ -196,24 +210,8 @@ function addMember() {
     }
 }
 
-function recordAttendance() {
-    const name = document.getElementById('attendanceName').value.trim();
-    const isPresent = document.getElementById('attendanceStatus').value === 'present';
-    if (name) {
-        const member = attendanceSystem.members[name];
-        if (member) {
-            if (member.isBlacklisted && isPresent) {
-                alert(`${name} is blacklisted. Reset blacklist before recording attendance.`);
-            } else {
-                attendanceSystem.recordAttendance(name, isPresent);
-                document.getElementById('attendanceName').value = '';
-            }
-        } else {
-            alert(`${name} is not a member.`);
-        }
-    } else {
-        alert('Please provide the name.');
-    }
+function recordAttendance(isPresent) {
+    attendanceSystem.recordAttendance(isPresent);
 }
 
 function resetBlacklist() {
@@ -241,6 +239,3 @@ function editMember(name) {
         alert('Please provide both name and post.');
     }
 }
-
-
-       
